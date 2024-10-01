@@ -1,0 +1,14 @@
+body {
+  font-family: 'Roboto', sans-serif; /* Use the chosen font */
+  background-color: rgb(238, 234, 229); /* Soft beige background for a warm feel */
+  color: var(--text-color); /* Default text color for readability */
+  margin: 0; /* Remove default margin */
+  padding: 0; /* Remove default padding */
+  line-height: 1.6; /* Improved line height for better readability */
+}
+
+  .scrollable-dropdown {
+    max-height: 200px; /* Adjust the height as needed */
+    overflow-y: auto; /* Enable vertical scrolling */
+  }
+  

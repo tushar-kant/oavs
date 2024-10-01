@@ -1,0 +1,50 @@
+.filter-dropdown {
+  width: 100%; /* Make the dropdown full width */
+  border: 1px solid #ced4da; /* Border styling */
+  border-radius: 0.25rem; /* Rounded corners */
+  background-color: white; /* Background color */
+}
+
+.filter-button {
+  width: 100%; /* Make the toggle button full width */
+  background-color: #f8f9fa; /* Light background for button */
+  color: #495057; /* Dark text color */
+  font-weight: bold; /* Bold text for visibility */
+  text-align: left; /* Align text to the left */
+  padding: 10px; /* Padding for better click area */
+}
+
+.filter-button:hover {
+  background-color: #e2e6ea; /* Change background on hover */
+}
+
+.filter-dropdown-menu {
+  border: 1px solid #ced4da; /* Border for dropdown menu */
+  border-radius: 0.25rem; /* Rounded corners */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+}
+
+.filter-dropdown-menu .dropdown-item {
+  display: flex; /* Flexbox for alignment */
+  align-items: center; /* Center align items vertically */
+  padding: 8px 12px; /* Padding for each item */
+}
+
+.filter-dropdown-menu .dropdown-item:hover {
+  background-color: #f1f1f1; /* Background color on hover */
+}
+
+.filter-dropdown-menu .dropdown-item input[type="checkbox"] {
+  margin-right: 10px; /* Space between checkbox and label */
+}
+
+/* Optional: Responsive styles for smaller screens */
+@media (max-width: 576px) {
+  .filter-button {
+    font-size: 0.9rem; /* Smaller text for mobile */
+  }
+
+  .filter-dropdown-menu {
+    max-height: 150px; /* Adjust max height for mobile */
+  }
+}
