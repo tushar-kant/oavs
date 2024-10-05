@@ -7,8 +7,6 @@ import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend }
 import Header from './Header';
 import Loading from './Loading'; // Import the Loading component
 
-
-
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const BoardResultOverall = () => {
@@ -18,6 +16,7 @@ const BoardResultOverall = () => {
   const [error, setError] = useState(null);
   const [selectedSessions, setSelectedSessions] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState(null); // New state for selected subject
 
   useEffect(() => {
     const fetchOverallResults = async () => {
@@ -50,12 +49,28 @@ const BoardResultOverall = () => {
       .catch(error => setError(error.message));
   }, []);
 
+  const handleBarClick = (chartElement) => {
+    if (chartElement.length > 0) {
+      const index = chartElement[0].index;
+      const label = chartDataStacked1.labels[index]; // Get the session label clicked
+      setSelectedSessions([label]); // Set selected session to clicked session
+    }
+  };
+
+  const handleSubjectClick = (chartElement) => {
+    if (chartElement.length > 0) {
+      const index = chartElement[0].index;
+      const subject = chartDataGrouped.labels[index]; // Get the subject label clicked
+      setSelectedSubject(subject); // Set the selected subject to clicked subject
+    }
+  };
+
   const filteredOverallResults = selectedSessions.length > 0
     ? overallResults.filter(result => selectedSessions.includes(result.session))
     : overallResults;
 
-  const filteredSubjectResults = selectedSessions.length > 0
-    ? subjectResults.filter(result => selectedSessions.includes(result.session))
+  const filteredSubjectResults = selectedSubject
+    ? subjectResults.filter(result => result.subject === selectedSubject)
     : subjectResults;
 
   const chartDataStacked1 = {
@@ -88,14 +103,6 @@ const BoardResultOverall = () => {
       }),
       backgroundColor: '#' + Math.floor(Math.random() * 16777215).toString(16)
     }))
-  };
-
-  const chartOptions = {
-    responsive: true,
-    scales: {
-      x: { stacked: true },
-      y: { stacked: true }
-    }
   };
 
   if (loading) return <Loading />; // Use custom loading component
@@ -192,7 +199,21 @@ const BoardResultOverall = () => {
               Stacked Bar Chart - Percentage Categories
             </CardHeader>
             <CardBody>
-              <Bar data={chartDataStacked1} options={chartOptions} />
+              <Bar
+                data={chartDataStacked1}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    datalabels: {
+                      anchor: 'end',
+                      align: 'start',
+                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                      color: 'white',
+                    },
+                  },
+                  onClick: (event, chartElement) => handleBarClick(chartElement) // Add click handler
+                }}
+              />
             </CardBody>
           </Card>
         </Col>
@@ -203,20 +224,52 @@ const BoardResultOverall = () => {
               Stacked Bar Chart - Pass, Fail, Compartmental
             </CardHeader>
             <CardBody>
-              <Bar data={chartDataStacked2} options={chartOptions} />
+              <Bar
+                data={chartDataStacked2}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    datalabels: {
+                      anchor: 'end',
+                      align: 'start',
+                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                      color: 'white',
+                    },
+                  },
+                  onClick: (event, chartElement) => handleBarClick(chartElement) // Add click handler
+                }}
+              />
             </CardBody>
           </Card>
         </Col>
       </Row>
 
-      <Card>
-        <CardHeader style={{ backgroundColor: '#210054', color: 'white' }}>
-          Grouped Bar Chart - Subject Results
-        </CardHeader>
-        <CardBody>
-          <Bar data={chartDataGrouped} options={{ responsive: true }} />
-        </CardBody>
-      </Card>
+      <Row className="my-4">
+        <Col md={12}>
+          <Card>
+            <CardHeader style={{ backgroundColor: '#158f8f', color: 'white' }}>
+              State Average by Subject
+            </CardHeader>
+            <CardBody>
+              <Bar
+                data={chartDataGrouped}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    datalabels: {
+                      anchor: 'end',
+                      align: 'start',
+                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                      color: 'white',
+                    },
+                  },
+                  onClick: (event, chartElement) => handleSubjectClick(chartElement) // Add click handler
+                }}
+              />
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 };

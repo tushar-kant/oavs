@@ -5,6 +5,10 @@ import FilterDropdown from './FilterDropdown'; // Import the FilterDropdown comp
 import Header from './Header';
 import Loading from './Loading'; // Import the Loading component
 import { Bar } from 'react-chartjs-2'; // Import Bar chart from Chart.js
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,ChartDataLabels);
 
 const SchoolScorecard = () => {
   const [scores, setScores] = useState([]);
@@ -12,6 +16,8 @@ const SchoolScorecard = () => {
   const [error, setError] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [selectedIndicator, setSelectedIndicator] = useState(null); // State for selected indicator
+  const [selectedDistrict, setSelectedDistrict] = useState(null); // State for selected district
 
   useEffect(() => {
     const fetchSchoolScores = async () => {
@@ -37,9 +43,13 @@ const SchoolScorecard = () => {
     fetchSchoolScores();
   }, []);
 
-  const filteredScores = selectedCategories.length > 0
-    ? scores.filter(score => selectedCategories.includes(score.category_name))
-    : scores;
+  // Filter scores based on selected categories, indicator, and district
+  const filteredScores = scores.filter(score => {
+    const categoryMatch = selectedCategories.includes(score.category_name);
+    const indicatorMatch = selectedIndicator ? score.indicator_name === selectedIndicator : true;
+    const districtMatch = selectedDistrict ? score.dist_name === selectedDistrict : true;
+    return categoryMatch && indicatorMatch && districtMatch;
+  });
 
   // Calculate indicator values based on filtered scores
   const indicatorValues = filteredScores.reduce((acc, item) => {
@@ -77,13 +87,32 @@ const SchoolScorecard = () => {
     ],
   };
 
-  // Chart options for horizontal bar chart
+  // Chart options with drill-down functionality for indicators
   const indicatorChartOptions = {
+    plugins: {
+      datalabels: {
+        anchor: 'end',
+        align: 'start',
+        color: 'white',
+      },
+    },
+    
     indexAxis: 'y', // This makes the bar chart horizontal
+    
     scales: {
       x: {
         beginAtZero: true, // Start the scale at zero
       },
+    },
+    
+  
+    
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        const clickedIndicator = indicatorChartData.labels[index];
+        setSelectedIndicator(clickedIndicator); // Set the selected indicator
+      }
     },
   };
 
@@ -99,13 +128,27 @@ const SchoolScorecard = () => {
     ],
   };
 
-  // Chart options for horizontal bar chart
+  // Chart options with drill-down functionality for districts
   const districtChartOptions = {
+    plugins: {
+      datalabels: {
+        anchor: 'end',
+        align: 'start',
+        color: 'white',
+      },
+    },
     indexAxis: 'y', // This makes the bar chart horizontal
     scales: {
       x: {
         beginAtZero: true, // Start the scale at zero
       },
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        const clickedDistrict = districtChartData.labels[index];
+        setSelectedDistrict(clickedDistrict); // Set the selected district
+      }
     },
   };
 
@@ -122,6 +165,9 @@ const SchoolScorecard = () => {
       </div>
       <hr />
       <Row className="mb-4">
+        <Col md={8}>
+        </Col>
+
         <Col md={4}>
           <FilterDropdown
             title="Select Categories"

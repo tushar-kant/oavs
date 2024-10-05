@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Row, Col, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Input, Card, CardHeader, CardBody } from 'reactstrap';
+import { Table, Row, Col, Card, CardHeader, CardBody } from 'reactstrap';
 import { Pie } from 'react-chartjs-2';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Ensure Bootstrap CSS is imported
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js';
@@ -7,19 +7,19 @@ import PaginationComponent from './PaginationComponent'; // Import the Paginatio
 import Header from './Header';
 import FilterDropdown from './FilterDropdown';
 import Loading from './Loading'; // Import the Loading component
+
 ChartJS.register(Title, Tooltip, Legend, ArcElement);
+
 const StudentTable = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // Number of items per page
-  const [dropdownOpen, setDropdownOpen] = useState({
-    institute: false,
-    session_name: false,
-    student_status: false,
-    distict_code: false,
-  });
+  const [selectedPhase, setSelectedPhase] = useState(null); // For phase drilldown
+  const [selectedCategory, setSelectedCategory] = useState(null); // For category drilldown
+
+  // Filters
   const [instituteFilters, setInstituteFilters] = useState([]);
   const [sessionNameFilters, setSessionNameFilters] = useState([]);
   const [studentStatusFilters, setStudentStatusFilters] = useState([]);
@@ -57,53 +57,33 @@ const StudentTable = () => {
     };
     fetchStudentData();
   }, []);
-  const toggleDropdown = (type) => {
-    setDropdownOpen(prevState => ({
-      ...prevState,
-      [type]: !prevState[type],
-    }));
-  };
-  const handleCheckboxChange = (type, value) => {
-    setSelectedFilters(prevFilters => {
-      const currentFilters = prevFilters[type];
-      if (currentFilters.includes(value)) {
-        return {
-          ...prevFilters,
-          [type]: currentFilters.filter(v => v !== value),
-        };
-      } else {
-        return {
-          ...prevFilters,
-          [type]: [...currentFilters, value],
-        };
-      }
-    });
-  };
-  const paginateData = (data) => {
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    return data.slice(start, end);
-  };
+
+  // Filter students based on selected filters and drilldown criteria
   const filteredStudents = students.filter(student => {
     return (
       (!selectedInstitute.length || selectedInstitute.includes(student.institute)) &&
       (!selectedStudentStatus.length || selectedStudentStatus.includes(student.student_status)) &&
       (!selectedSessionName.length || selectedSessionName.includes(student.session_name)) &&
-      (!selectedDistrict.length || selectedDistrict.includes(student.distict_code))
+      (!selectedDistrict.length || selectedDistrict.includes(student.distict_code)) &&
+      (!selectedPhase || student.phase === selectedPhase) && // Drilldown filter for phase
+      (!selectedCategory || student.category_1 === selectedCategory) // Drilldown filter for category
     );
   });
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
+
   if (loading) return <Loading />; // Use custom loading component
   if (error) return <p>Error: {error}</p>;
+
+  // Get counts for different categories
   const getCategoryCounts = (category) =>
     filteredStudents.reduce((acc, student) => {
       const value = student[category] || 'Unknown';
       acc[value] = (acc[value] || 0) + 1;
       return acc;
     }, {});
+
   const generateRandomColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16);
+
+  // Pie data
   const genderPieData = {
     labels: Object.keys(getCategoryCounts('gender')),
     datasets: [{
@@ -111,6 +91,7 @@ const StudentTable = () => {
       backgroundColor: Array.from({ length: 3 }, generateRandomColor), // Generate 3 random colors
     }],
   };
+
   const category1PieData = {
     labels: Object.keys(getCategoryCounts('category_1')),
     datasets: [{
@@ -126,39 +107,41 @@ const StudentTable = () => {
       backgroundColor: ['#FF6F61', '#6B8E23', '#FFD700', '#48D1CC', '#BA55D3'], // Coral, olive green, gold, medium turquoise, orchid
     }],
   };
+
   const phaseCounts = getCategoryCounts('phase');
+
+  // Table row click handler for phase drilldown
+  const handlePhaseClick = (phase) => {
+    setSelectedPhase(phase === selectedPhase ? null : phase); // Toggle selection
+  };
+
+  // Phase table rows
   const phaseTableRows = Object.entries(phaseCounts).map(([phase, count]) => (
-    <tr key={phase}>
+    <tr key={phase} onClick={() => handlePhaseClick(phase)} style={{ cursor: 'pointer', backgroundColor: phase === selectedPhase ? '#e0e0e0' : 'transparent' }}>
       <td>{phase}</td>
       <td>{count}</td>
     </tr>
   ));
-  const instituteCounts = filteredStudents.reduce((acc, student) => {
-    const key = `${student.institute}_${student.institute_code}`;
-    if (!acc[key]) {
-      acc[key] = { institute: student.institute, institute_code: student.institute_code, count: 0 };
+
+  const handleChartClick = (elements, category) => {
+    if (elements.length > 0) {
+      const clickedElementIndex = elements[0].index;
+      const clickedCategory = category.labels[clickedElementIndex];
+      setSelectedCategory(clickedCategory === selectedCategory ? null : clickedCategory); // Toggle category
     }
-    acc[key].count += 1;
-    return acc;
-  }, {});
+  };
 
-  // const instituteTableRows = paginateData(Object.values(instituteCounts)).map(({ institute, institute_code, count }) => (
-  //   <tr key={institute_code}>
-  //     <td>{institute}</td>
-  //     <td>{institute_code}</td>
-  //     <td>{count}</td>
-  //   </tr>
-  // ));
+  // Institute-wise counts
+  const instituteCounts = getCategoryCounts('institute');
 
-  const instituteTableRows = Object.values(instituteCounts).map(({ institute, institute_code, count }) => (
-    <tr key={institute_code}>
+  // Institute table rows
+  const instituteTableRows = Object.entries(instituteCounts).map(([institute, count]) => (
+    <tr key={institute}>
       <td>{institute}</td>
-      <td>{institute_code}</td>
+      <td>{institute.split(' ')[0]}</td> {/* Assuming institute code is part of the name */}
       <td>{count}</td>
     </tr>
   ));
-
-  const totalPages = Math.ceil(Object.values(instituteCounts).length / itemsPerPage);
 
   return (
     <div className="container border">
@@ -171,14 +154,14 @@ const StudentTable = () => {
         <Col md={3}>
           <h4 className="text-left mb-0">Total Records: {filteredStudents.length}</h4>
         </Col>
-      </Row><hr />
+      </Row>
+      <hr />
       <Row className="mb-4 align-items-center">
         <Col md={12}>
           <div className="dropdown-filters d-flex justify-content-end">
             <FilterDropdown
               title="Institute"
               options={instituteFilters}
-
               selectedOptions={selectedInstitute}
               onOptionChange={setSelectedInstitute}
             />
@@ -202,86 +185,109 @@ const StudentTable = () => {
             />
           </div>
         </Col>
-      </Row><hr />
+      </Row>
+      <hr />
       <Row className="mb-4">
-  <Col md={8}>
-    <Row>
-      <Col md={6}>
-        <Card>
-          <CardHeader style={{ backgroundColor: '#20c997', color: 'white' }}>
-            Gender Distribution
-          </CardHeader>
-          <CardBody>
-            <Pie data={genderPieData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
-          </CardBody>
-        </Card>
-      </Col>
-      <Col md={6}>
-        <Card>
-          <CardHeader style={{ backgroundColor: '#498754', color: 'white' }}>
-            Category 1 Distribution
-          </CardHeader>
-          <CardBody>
-            <Pie data={category1PieData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
-          </CardBody>
-        </Card>
-      </Col>
-    </Row>
-    <Row>
-      <Col md={6}>
-        <Card>
-          <CardHeader style={{ backgroundColor: '#6610f2', color: 'white' }}>
-            Category 2 Distribution
-          </CardHeader>
-          <CardBody>
-            <Pie data={category2PieData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
-          </CardBody>
-        </Card>
-      </Col>
-      <Col md={6}>
-        <Card>
-          <CardHeader style={{ backgroundColor: '#788754', color: 'white' }}>
-            Phase-wise Student Count
-          </CardHeader>
-          <CardBody>
-            <Table bordered>
-              <thead>
-                <tr>
-                  <th>Phase</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody>{phaseTableRows}</tbody>
-            </Table>
-          </CardBody>
-        </Card>
-      </Col>
-    </Row>
-  </Col>
-  <Col md={4}>
-    <Card>
-      <CardHeader style={{ backgroundColor: '#978754', color: 'white' }}>
-        Institute-wise Student Count
-      </CardHeader>
-      <CardBody>
-        <div className="table-responsive" style={{ maxHeight: '750px', overflowY: 'auto' }}>
-          <Table bordered>
-            <thead>
-              <tr>
-                <th>Institute</th>
-                <th>Institute Code</th>
-                <th>Count</th>
-              </tr>
-            </thead>
-            <tbody>{instituteTableRows}</tbody>
-          </Table>
-        </div>
-      </CardBody>
-    </Card>
-  </Col>
-</Row>
-
+        <Col md={8}>
+          <Row>
+            <Col md={6}>
+              <Card>
+                <CardHeader style={{ backgroundColor: '#20c997', color: 'white' }}>
+                  Gender Distribution
+                </CardHeader>
+                <CardBody>
+                  <Pie
+                    data={genderPieData}
+                    options={{
+                      responsive: true,
+                      plugins: { legend: { position: 'top' } },
+                      
+                    }}
+                  />
+                </CardBody>
+              </Card>
+            </Col>
+            <Col md={6}>
+              <Card>
+                <CardHeader style={{ backgroundColor: '#498754', color: 'white' }}>
+                  Category 1 Distribution
+                </CardHeader>
+                <CardBody>
+                  <Pie
+                    data={category1PieData}
+                    options={{
+                      responsive: true,
+                      plugins: { legend: { position: 'top' } },
+                      onClick: (event, elements) => handleChartClick(elements, category1PieData)
+                    }}
+                  />
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <Card>
+                <CardHeader style={{ backgroundColor: '#6610f2', color: 'white' }}>
+                  Category 2 Distribution
+                </CardHeader>
+                <CardBody>
+                  <Pie
+                    data={category2PieData}
+                    options={{
+                      responsive: true,
+                      plugins: { legend: { position: 'top' } },
+                    }}
+                  />
+                </CardBody>
+              </Card>
+            </Col>
+            <Col md={6}>
+              <Card>
+                <CardHeader style={{ backgroundColor: '#788754', color: 'white' }}>
+                  Phase-wise Student Count
+                </CardHeader>
+                <CardBody>
+                  <Table bordered>
+                    <thead>
+                      <tr>
+                        <th>Phase</th>
+                        <th>Count</th>
+                      </tr>
+                    </thead>
+                    <tbody>{phaseTableRows}</tbody>
+                  </Table>
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+        </Col>
+        <Col md={4}>
+          <Card>
+            <CardHeader style={{ backgroundColor: '#978754', color: 'white' }}>
+              Institute-wise Student Count
+            </CardHeader>
+            <CardBody>
+              <div className="table-responsive" style={{ maxHeight: '750px', overflowY: 'auto' }}>
+                <Table bordered>
+                  <thead>
+                    <tr>
+                      <th>Institute</th>
+                      <th>Institute Code</th>
+                      <th>Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {instituteTableRows} {/* Institute-wise rows added here */}
+                  </tbody>
+                </Table>
+              </div>
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 };
+
 export default StudentTable;

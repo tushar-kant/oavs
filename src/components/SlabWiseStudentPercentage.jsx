@@ -7,7 +7,6 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import Header from './Header';
 import Loading from './Loading'; // Import the Loading component
 
-
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -28,6 +27,9 @@ const SlabWiseStudentPercentage = () => {
   const [selectedSessions, setSelectedSessions] = useState([]);
   const [selectedDistricts, setSelectedDistricts] = useState([]);
   const [selectedExams, setSelectedExams] = useState([]);
+
+  const [clickedVidyalaya, setClickedVidyalaya] = useState(null);
+  const [clickedSlab, setClickedSlab] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,6 +72,13 @@ const SlabWiseStudentPercentage = () => {
       (!selectedExams.length || selectedExams.includes(item.exam_name))
     );
   });
+  // Filter the data based on clicked subject or exam
+  const drillDownFilteredData = filteredData.filter(item => {
+    return (
+      (!clickedVidyalaya || item.vidyalaya_name === clickedVidyalaya) &&
+      (!clickedSlab || item.slab === clickedSlab)
+    );
+  });
 
   // Helper function to calculate averages for duplicate values
   const calculateAverage = (data, key) => {
@@ -92,8 +101,8 @@ const SlabWiseStudentPercentage = () => {
   };
 
   // Prepare data for the two bar charts
-  const averagedVidyalayaData = calculateAverage(filteredData, 'vidyalaya_name');
-  const averagedSlabData = calculateAverage(filteredData, 'slab');
+  const averagedVidyalayaData = calculateAverage(drillDownFilteredData, 'vidyalaya_name');
+  const averagedSlabData = calculateAverage(drillDownFilteredData, 'slab');
 
   const vidyalayaChartData = {
     labels: averagedVidyalayaData.map(item => item.vidyalaya_name),
@@ -119,90 +128,140 @@ const SlabWiseStudentPercentage = () => {
 
   if (loading) return <Loading />; // Use custom loading component
   if (error) return <p className="text-center text-danger">Error: {error}</p>;
+  const handleVidyalayaClick = (event, elements) => {
+    if (elements.length > 0) {
+      const clickedIndex = elements[0].index;
+      const clickedLabel = vidyalayaChartData.labels[clickedIndex];
+      setClickedVidyalaya(clickedLabel);
+      setClickedSlab(null); // Reset clicked slab when a vidyalaya is clicked
+    }
+  };
 
+  const handleSlabClick = (event, elements) => {
+    if (elements.length > 0) {
+      const clickedIndex = elements[0].index;
+      const clickedLabel = slabChartData.labels[clickedIndex];
+      setClickedSlab(clickedLabel);
+      setClickedVidyalaya(null); // Reset clicked vidyalaya when a slab is clicked
+    }
+  };
   return (
-    <div className="container border"><Header />
-  
-      <div className="row">
-        <div className="col-8">
-          <h1 className="my-4">OAVS(Slab Wise student percentage)</h1>
-        </div>
-        <div className="col-4 text-center pt-4">
-        <h4 className="text-left mb-0">Total Records: {filteredData.length}</h4>
-        </div>
-      </div>
+    <Container className="my-4 border"><Header />
+      <Row className="align-items-center mb-4 p-1">
+
+        <Col md={6}>
+          <h1 className="">OAVS(Slab Wise student percentage)
+          </h1>
+        </Col>
+        <Col md={3}>
+        </Col>
+        <Col md={3}>
+          <h4 className="text-left mb-0">Total Records: {drillDownFilteredData.length}</h4>
+        </Col>
+      </Row>
       <hr />
+
       <div className="d-flex justify-content-end mb-4">
 
-          <FilterDropdown
-            title="Vidyalaya Name"
-            options={vidyalayaNames}
-            selectedOptions={selectedVidyalayas}
-            onOptionChange={setSelectedVidyalayas}
-            className="ms-3"
+        <FilterDropdown
+          title="Vidyalaya Name"
+          options={vidyalayaNames}
+          selectedOptions={selectedVidyalayas}
+          onOptionChange={setSelectedVidyalayas}
+          className="ms-3"
 
-          />
-      
-          <FilterDropdown
-            title="Class Name"
-            options={classNames}
-            selectedOptions={selectedClasses}
-            onOptionChange={setSelectedClasses}
-            className="ms-3"
+        />
 
-          />
-   
-          <FilterDropdown
-            title="Session Name"
-            options={sessionNames}
-            selectedOptions={selectedSessions}
-            onOptionChange={setSelectedSessions}
-            className="ms-3"
+        <FilterDropdown
+          title="Class Name"
+          options={classNames}
+          selectedOptions={selectedClasses}
+          onOptionChange={setSelectedClasses}
+          className="ms-3"
 
-          />
-    
-          <FilterDropdown
-            title="District"
-            options={districts}
-            selectedOptions={selectedDistricts}
-            onOptionChange={setSelectedDistricts}
-            className="ms-3"
+        />
 
-          />
-   
-          <FilterDropdown
-            title="Exam Name"
-            options={examNames}
-            selectedOptions={selectedExams}
-            onOptionChange={setSelectedExams}
-            className="ms-3"
+        <FilterDropdown
+          title="Session Name"
+          options={sessionNames}
+          selectedOptions={selectedSessions}
+          onOptionChange={setSelectedSessions}
+          className="ms-3"
 
-          />
+        />
+
+        <FilterDropdown
+          title="District"
+          options={districts}
+          selectedOptions={selectedDistricts}
+          onOptionChange={setSelectedDistricts}
+          className="ms-3"
+
+        />
+
+        <FilterDropdown
+          title="Exam Name"
+          options={examNames}
+          selectedOptions={selectedExams}
+          onOptionChange={setSelectedExams}
+          className="ms-3"
+
+        />
       </div>
 
-
-
       <Row>
-        <Col md={6} className="mb-4">
-          <Card>
-            <CardHeader style={{ backgroundColor: '#449954', color: 'white' }}>
-              Student Percentage by Vidyalaya</CardHeader>
-            <CardBody>
-              <Bar data={vidyalayaChartData} options={{ responsive: true, scales: { x: { beginAtZero: true } } }} />
-            </CardBody>
-          </Card>
+        <Col md={7} className="mb-4">
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ width: '1500px' }}> 
+              <Card>
+                <CardHeader style={{ backgroundColor: '#449954', color: 'white' }}>
+                  Student Percentage by Vidyalaya</CardHeader>
+                <CardBody>
+                  <Bar data={vidyalayaChartData}
+                    options={{
+                      responsive: true,
+                      scales: { x: { beginAtZero: true } },
+                      plugins: {
+                        datalabels: {
+                          anchor: 'end',
+                          align: 'start',
+                          rotation: 90, // Rotate the labels to be vertical
+
+                          formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                          color: 'white',
+                        },
+                      },
+                      onClick: (event, elements) => handleVidyalayaClick(event, elements),
+                    }} />
+                </CardBody>
+              </Card>
+            </div>
+          </div>
         </Col>
-        <Col md={6} className="mb-4">
+        <Col md={5} className="mb-4">
           <Card>
             <CardHeader style={{ backgroundColor: '#696851', color: 'white' }}>
               Student Percentage by Slab</CardHeader>
             <CardBody>
-              <Bar data={slabChartData} options={{ responsive: true, scales: { x: { beginAtZero: true } } }} />
+              <Bar data={slabChartData}
+                options={{
+                  responsive: true,
+                  scales: { x: { beginAtZero: true } },
+                  plugins: {
+                    datalabels: {
+                      anchor: 'end',
+                      align: 'start',
+                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                      color: 'white',
+                    },
+                  },
+                  onClick: (event, elements) => handleSlabClick(event, elements),
+                }} />
             </CardBody>
           </Card>
         </Col>
       </Row>
-    </div>
+    </Container>
   );
 };
 

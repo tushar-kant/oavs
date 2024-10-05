@@ -6,10 +6,10 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import Header from './Header';
 import Loading from './Loading'; // Import the Loading component
-
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 // Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,ChartDataLabels);
 
 const ExamAndSubjectWisePercentage = () => {
   const [data, setData] = useState([]);
@@ -26,6 +26,10 @@ const ExamAndSubjectWisePercentage = () => {
   const [selectedDistrict, setSelectedDistrict] = useState([]);
   const [selectedVidyalaya, setSelectedVidyalaya] = useState([]);
   const [selectedClass, setSelectedClass] = useState([]);
+
+  // Drill-down states
+  const [clickedSubject, setClickedSubject] = useState(null);
+  const [clickedExam, setClickedExam] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,6 +70,14 @@ const ExamAndSubjectWisePercentage = () => {
     );
   });
 
+  // Filter the data based on clicked subject or exam
+  const drillDownFilteredData = filteredData.filter(item => {
+    return (
+      (!clickedSubject || item.subject_name === clickedSubject) &&
+      (!clickedExam || item.exam_name === clickedExam)
+    );
+  });
+
   if (loading) return <Loading />; // Use custom loading component
   if (error) return <p className="text-danger text-center">Error: {error}</p>;
 
@@ -85,8 +97,8 @@ const ExamAndSubjectWisePercentage = () => {
     }));
   };
 
-  const averagedSubjectData = calculateAverage(filteredData, 'subject_name');
-  const averagedExamData = calculateAverage(filteredData, 'exam_name');
+  const averagedSubjectData = calculateAverage(drillDownFilteredData, 'subject_name');
+  const averagedExamData = calculateAverage(drillDownFilteredData, 'exam_name');
 
   const subjectChartData = {
     labels: averagedSubjectData.map(item => item.subject_name),
@@ -94,7 +106,7 @@ const ExamAndSubjectWisePercentage = () => {
       {
         label: 'Pass Percentage',
         data: averagedSubjectData.map(item => item.pass_percent),
-        backgroundColor: '#' + Math.floor(Math.random() * 16777215).toString(16), // Random color
+        backgroundColor: "green", // Random color
       },
     ],
   };
@@ -105,9 +117,27 @@ const ExamAndSubjectWisePercentage = () => {
       {
         label: 'Pass Percentage',
         data: averagedExamData.map(item => item.pass_percent),
-        backgroundColor: '#' + Math.floor(Math.random() * 16777215).toString(16), // Random color
+        backgroundColor: 'pink', // Random color
       },
     ],
+  };
+
+  const handleSubjectClick = (event, elements) => {
+    if (elements.length > 0) {
+      const clickedIndex = elements[0].index;
+      const clickedLabel = subjectChartData.labels[clickedIndex];
+      setClickedSubject(clickedLabel);
+      setClickedExam(null); // Reset clicked exam when subject is clicked
+    }
+  };
+
+  const handleExamClick = (event, elements) => {
+    if (elements.length > 0) {
+      const clickedIndex = elements[0].index;
+      const clickedLabel = examChartData.labels[clickedIndex];
+      setClickedExam(clickedLabel);
+      setClickedSubject(null); // Reset clicked subject when exam is clicked
+    }
   };
 
   return (
@@ -116,15 +146,13 @@ const ExamAndSubjectWisePercentage = () => {
 
       <div className="row">
         <div className="col-8">
-          <h1 className="my-4">OAVS(exam and subject wise pass %)</h1>
+          <h1 className="my-4">OAVS (exam and subject wise pass %)</h1>
         </div>
         <div className="col-4 text-center pt-4">
-        <h4 className="text-left mb-0">Total Records: {filteredData.length}</h4>
+          <h4 className="text-left mb-0">Total Records: {drillDownFilteredData.length}</h4>
         </div>
       </div>
       <hr />
-
-
 
       <div className="d-flex justify-content-end mb-4">
         <FilterDropdown
@@ -164,7 +192,23 @@ const ExamAndSubjectWisePercentage = () => {
             </CardHeader>
             <CardBody>
               <CardTitle tag="h5" className="text-center">Pass Percentage</CardTitle>
-              <Bar data={subjectChartData} options={{ responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true } } }} />
+              <Bar
+                data={subjectChartData}
+                options={{
+                  responsive: true,
+                  indexAxis: 'y',
+                  scales: { x: { beginAtZero: true } },
+                  plugins: {
+                    datalabels: {
+                      anchor: 'end',
+                      align: 'start',
+                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                      color: 'black',
+                    },
+                  },
+                  onClick: (event, elements) => handleSubjectClick(event, elements),
+                }}
+              />
             </CardBody>
           </Card>
         </Col>
@@ -175,7 +219,23 @@ const ExamAndSubjectWisePercentage = () => {
             </CardHeader>
             <CardBody>
               <CardTitle tag="h5" className="text-center">Pass Percentage</CardTitle>
-              <Bar data={examChartData} options={{ responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true } } }} />
+              <Bar
+                data={examChartData}
+                options={{
+                  responsive: true,
+                  indexAxis: 'y',
+                  scales: { x: { beginAtZero: true } },
+                  plugins: {
+                    datalabels: {
+                      anchor: 'end',
+                      align: 'start',
+                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                      color: 'white',
+                    },
+                  },
+                  onClick: (event, elements) => handleExamClick(event, elements),
+                }}
+              />
             </CardBody>
           </Card>
         </Col>

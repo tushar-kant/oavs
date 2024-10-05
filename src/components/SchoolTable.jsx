@@ -5,12 +5,12 @@ import Header from './Header';
 import FilterDropdown from './FilterDropdown'; // Import the FilterDropdown component
 import Loading from './Loading'; // Import the Loading component
 
-
 const SchoolTable = () => {
   const { data, loading, error } = useFetchData('http://localhost:3000/school/school-details');
   const [filter, setFilter] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [hasDistricts, setHasDistricts] = useState(true);
+  const [selectedPhase, setSelectedPhase] = useState(''); // State to store the selected phase
 
   useEffect(() => {
     if (data) {
@@ -25,21 +25,26 @@ const SchoolTable = () => {
   if (error) return <p>Error: {error.message}</p>;
 
   const filteredData = data.filter(item => {
-    if (filter.length === 0) return true;
-    if (filter.includes('N/A')) {
-      return !item.district || filter.includes(item.district);
-    }
-    return filter.includes(item.district);
-  });
+    const districtFilterMatch = filter.length === 0 || (filter.includes('N/A') ? !item.district || filter.includes(item.district) : filter.includes(item.district));
+    const phaseFilterMatch = selectedPhase === '' || item.phase === selectedPhase; // Filter by selected phase
+    return districtFilterMatch && phaseFilterMatch;
+  })
+  
 
   // Phase counts for the second table
-  const phaseCounts = filteredData.reduce((acc, { phase }) => {
+  const phaseCounts = data.reduce((acc, { phase }) => {
     acc[phase] = (acc[phase] || 0) + 1;
     return acc;
   }, {});
 
+  
+  // Handle phase click to set selected phase and filter data
+  const handlePhaseClick = (phase) => {
+    setSelectedPhase(prevPhase => (prevPhase === phase ? '' : phase)); // Toggle phase selection
+  };
+
   return (
-    <div className="container border">
+    <div className="container border mt-4">
       <Header />
       <div className="row">
         <div className="col-8">
@@ -113,7 +118,11 @@ const SchoolTable = () => {
                   </thead>
                   <tbody>
                     {Object.entries(phaseCounts).map(([phase, count], index) => (
-                      <tr key={index}>
+                      <tr
+                        key={index}
+                        style={{ cursor: 'pointer', backgroundColor: selectedPhase === phase ? '#c8e6c9' : '' }}
+                        onClick={() => handlePhaseClick(phase)}
+                      >
                         <td>{phase}</td>
                         <td>{count}</td>
                       </tr>

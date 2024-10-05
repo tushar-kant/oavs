@@ -23,6 +23,9 @@ const ResultAnalysis = () => {
   const [institutes, setInstitutes] = useState([]);
   const [classes, setClasses] = useState([]);
 
+  // Drill-down states
+  const [clickedSubject, setClickedSubject] = useState(null);
+  const [clickedExam, setClickedExam] = useState(null);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -57,6 +60,13 @@ const ResultAnalysis = () => {
     (selectedClass.length ? selectedClass.includes(item.class_name) : true)
   ));
 
+  // Filter the data based on clicked subject or exam
+  const drillDownFilteredData = filteredData.filter(item => {
+    return (
+      (!clickedSubject || item.subject_name === clickedSubject) &&
+      (!clickedExam || item.exam_name === clickedExam)
+    );
+  });
   const calculateAverage = (data, key) => {
     const groupedData = {};
     data.forEach(item => {
@@ -72,8 +82,8 @@ const ResultAnalysis = () => {
     }));
   };
 
-  const averagedSubjectScores = calculateAverage(filteredData, 'subject_name');
-  const averagedExamScores = calculateAverage(filteredData, 'exam_name');
+  const averagedSubjectScores = calculateAverage(drillDownFilteredData, 'subject_name');
+  const averagedExamScores = calculateAverage(drillDownFilteredData, 'exam_name');
 
   const subjectChartData = {
     labels: averagedSubjectScores.map(item => item.subject_name),
@@ -104,6 +114,23 @@ const ResultAnalysis = () => {
       y: { beginAtZero: true },
     },
   };
+  const handleSubjectClick = (event, elements) => {
+    if (elements.length > 0) {
+      const clickedIndex = elements[0].index;
+      const clickedLabel = subjectChartData.labels[clickedIndex];
+      setClickedSubject(clickedLabel);
+      setClickedExam(null); // Reset clicked exam when subject is clicked
+    }
+  };
+
+  const handleExamClick = (event, elements) => {
+    if (elements.length > 0) {
+      const clickedIndex = elements[0].index;
+      const clickedLabel = examChartData.labels[clickedIndex];
+      setClickedExam(clickedLabel);
+      setClickedSubject(null); // Reset clicked subject when exam is clicked
+    }
+  };
 
   if (loading) return <Loading />; // Use custom loading component
   if (error) return <p>Error: {error}</p>;
@@ -116,45 +143,40 @@ const ResultAnalysis = () => {
           <h1 className="m-4">OAVS(Session wise Score)</h1>
         </div>
         <div className="col-4 text-center pt-4">
-          <h4 className="text-left mb-0">Total Records: {filteredData.length}</h4>
+          <h4 className="text-left mb-0">Total Records: {drillDownFilteredData.length}</h4>
         </div>
       </div>
       <hr />
-      <Row className="mb-2">
-        <Col md={4}></Col>
-        <Col md={2}>
+      <div className="d-flex justify-content-end mb-4">
+
           <FilterDropdown
             title="Select Session"
             options={sessions}
             selectedOptions={selectedSession}
             onOptionChange={setSelectedSession}
           />
-        </Col>
-        <Col md={2}>
+       
           <FilterDropdown
             title="Select District"
             options={districts}
             selectedOptions={selectedDistrict}
             onOptionChange={setSelectedDistrict}
           />
-        </Col>
-        <Col md={2}>
+       
           <FilterDropdown
             title="Select Institute"
             options={institutes}
             selectedOptions={selectedInstitute}
             onOptionChange={setSelectedInstitute}
           />
-        </Col>
-        <Col md={2}>
+       
           <FilterDropdown
             title="Select Class"
             options={classes}
             selectedOptions={selectedClass}
             onOptionChange={setSelectedClass}
           />
-        </Col>
-      </Row>
+      </div>
 
       <Card className="mb-4">
         <CardHeader style={{ backgroundColor: '#567854', color: 'white' }}>
@@ -162,7 +184,25 @@ const ResultAnalysis = () => {
         </CardHeader>
         <CardBody>
           <div style={{ overflowX: 'auto', height: '300px' }}> {/* Adjust height */}
-            <Bar data={subjectChartData} options={chartOptions} height={200} /> {/* Set chart height */}
+            <Bar data={subjectChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false, // Ensures charts are not constrained by aspect ratio
+                scales: {
+                  y: { beginAtZero: true },
+                },
+                plugins: {
+                  datalabels: {
+                    anchor: 'end',
+                    align: 'start',
+                    formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                    color: 'white',
+                  },
+                },
+                onClick: (event, elements) => handleSubjectClick(event, elements),
+
+              }}
+              height={200} /> {/* Set chart height */}
           </div>
         </CardBody>
       </Card>
@@ -173,7 +213,26 @@ const ResultAnalysis = () => {
         </CardHeader>
         <CardBody>
           <div style={{ overflowX: 'auto', height: '300px' }}> {/* Adjust height */}
-            <Bar data={examChartData} options={chartOptions} height={200} /> {/* Set chart height */}
+            <Bar data={examChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false, // Ensures charts are not constrained by aspect ratio
+                scales: {
+                  y: { beginAtZero: true },
+
+                },
+                plugins: {
+                  datalabels: {
+                    anchor: 'end',
+                    align: 'start',
+                    formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
+                    color: 'white',
+                  },
+                },
+                onClick: (event, elements) => handleExamClick(event, elements),
+
+              }}
+              height={200} /> {/* Set chart height */}
           </div>
         </CardBody>
       </Card>
