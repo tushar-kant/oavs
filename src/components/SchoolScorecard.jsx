@@ -8,7 +8,7 @@ import { Bar } from 'react-chartjs-2'; // Import Bar chart from Chart.js
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,ChartDataLabels);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
 const SchoolScorecard = () => {
   const [scores, setScores] = useState([]);
@@ -87,34 +87,6 @@ const SchoolScorecard = () => {
     ],
   };
 
-  // Chart options with drill-down functionality for indicators
-  const indicatorChartOptions = {
-    plugins: {
-      datalabels: {
-        anchor: 'end',
-        align: 'start',
-        color: 'white',
-      },
-    },
-    
-    indexAxis: 'y', // This makes the bar chart horizontal
-    
-    scales: {
-      x: {
-        beginAtZero: true, // Start the scale at zero
-      },
-    },
-    
-  
-    
-    onClick: (event, elements) => {
-      if (elements.length > 0) {
-        const index = elements[0].index;
-        const clickedIndicator = indicatorChartData.labels[index];
-        setSelectedIndicator(clickedIndicator); // Set the selected indicator
-      }
-    },
-  };
 
   // Chart data for districts
   const districtChartData = {
@@ -128,29 +100,6 @@ const SchoolScorecard = () => {
     ],
   };
 
-  // Chart options with drill-down functionality for districts
-  const districtChartOptions = {
-    plugins: {
-      datalabels: {
-        anchor: 'end',
-        align: 'start',
-        color: 'white',
-      },
-    },
-    indexAxis: 'y', // This makes the bar chart horizontal
-    scales: {
-      x: {
-        beginAtZero: true, // Start the scale at zero
-      },
-    },
-    onClick: (event, elements) => {
-      if (elements.length > 0) {
-        const index = elements[0].index;
-        const clickedDistrict = districtChartData.labels[index];
-        setSelectedDistrict(clickedDistrict); // Set the selected district
-      }
-    },
-  };
 
   return (
     <div className="container border">
@@ -186,7 +135,30 @@ const SchoolScorecard = () => {
               Indicators
             </CardHeader>
             <CardBody>
-              <Bar data={indicatorChartData} options={indicatorChartOptions} height={400} /> {/* Set height */}
+              <Bar data={indicatorChartData} options={{
+                plugins: {
+                  datalabels: {
+                    anchor: 'end',
+                    align: 'start',
+                    color: 'white',
+                  },
+                },
+                indexAxis: 'y', // This makes the bar chart horizontal
+
+                scales: {
+                  x: {
+                    beginAtZero: true, // Start the scale at zero
+                  },
+                },
+                onClick: (event, elements) => {
+                  if (elements.length > 0) {
+                    const index = elements[0].index;
+                    const clickedIndicator = indicatorChartData.labels[index];
+                    setSelectedIndicator(clickedIndicator); // Set the selected indicator
+                  }
+                },
+
+              }} height={400} /> {/* Set height */}
             </CardBody>
           </Card>
         </Col>
@@ -197,7 +169,28 @@ const SchoolScorecard = () => {
               Districts
             </CardHeader>
             <CardBody>
-              <Bar data={districtChartData} options={districtChartOptions} height={400} /> {/* Set height */}
+              <Bar data={districtChartData} options={{
+                plugins: {
+                  datalabels: {
+                    anchor: 'end',
+                    align: 'start',
+                    color: 'white',
+                  },
+                },
+                indexAxis: 'y', // This makes the bar chart horizontal
+                scales: {
+                  x: {
+                    beginAtZero: true, // Start the scale at zero
+                  },
+                },
+                onClick: (event, elements) => {
+                  if (elements.length > 0) {
+                    const index = elements[0].index;
+                    const clickedDistrict = districtChartData.labels[index];
+                    setSelectedDistrict(clickedDistrict); // Set the selected district
+                  }
+                },
+              }} height={400} /> {/* Set height */}
             </CardBody>
           </Card>
         </Col>

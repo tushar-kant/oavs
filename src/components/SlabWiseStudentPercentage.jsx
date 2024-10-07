@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useMemo } from 'react';
 import { Row, Col, Container, Card, CardBody, CardHeader } from 'reactstrap';
 import FilterDropdown from './FilterDropdown';
 import { Bar } from 'react-chartjs-2';
@@ -145,6 +145,7 @@ const SlabWiseStudentPercentage = () => {
       setClickedVidyalaya(null); // Reset clicked vidyalaya when a slab is clicked
     }
   };
+  
   return (
     <Container className="my-4 border"><Header />
       <Row className="align-items-center mb-4 p-1">
@@ -210,9 +211,9 @@ const SlabWiseStudentPercentage = () => {
       </div>
 
       <Row>
-        <Col md={7} className="mb-4">
-          <div style={{ overflowX: 'auto' }}>
-            <div style={{ width: '1500px' }}> 
+        <Col md={7} className="mb-4" >
+          <div style={{ overflowX: 'scroll' }}>
+            <div style={{ width: '3000px' }} id='test-chart1'>
               <Card>
                 <CardHeader style={{ backgroundColor: '#449954', color: 'white' }}>
                   Student Percentage by Vidyalaya</CardHeader>
@@ -220,15 +221,38 @@ const SlabWiseStudentPercentage = () => {
                   <Bar data={vidyalayaChartData}
                     options={{
                       responsive: true,
-                      scales: { x: { beginAtZero: true } },
+                      scales: {
+                        x: {
+                          beginAtZero: true, 
+                        },
+                        y: {
+                          beginAtZero: true,
+                          ticks: {
+                            stepSize:40,
+
+                            autoSkip: false, // Ensure all labels are displayed
+                            maxRotation: 0, // Prevent label rotation
+                            minRotation: 0,
+                            font: {
+                              size: 12, // Adjust font size for y-axis labels
+                            },
+                          },
+                        },
+                      },
                       plugins: {
                         datalabels: {
                           anchor: 'end',
                           align: 'start',
-                          rotation: 90, // Rotate the labels to be vertical
+                          color: 'black',
+                          formatter: (value) => {
+                            // Check if value is a number and not undefined
+                            if (typeof value === 'number') {
+                              return `${value.toFixed(2)}%`; // Show value as percentage
+                            }
+                            return ''; // Return an empty string or handle undefined values
+                          },
+                          rotation: 90, // Rotate the label to make it vertical
 
-                          formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
-                          color: 'white',
                         },
                       },
                       onClick: (event, elements) => handleVidyalayaClick(event, elements),
@@ -251,10 +275,19 @@ const SlabWiseStudentPercentage = () => {
                     datalabels: {
                       anchor: 'end',
                       align: 'start',
-                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
-                      color: 'white',
+                      color: 'black',
+                      formatter: (value) => {
+                        // Check if value is a number and not undefined
+                        if (typeof value === 'number') {
+                          return `${value.toFixed(2)}%`; // Show value as percentage
+                        }
+                        return ''; // Return an empty string or handle undefined values
+                      },
+                      rotation: 90, // Rotate the label to make it vertical
+
                     },
                   },
+
                   onClick: (event, elements) => handleSlabClick(event, elements),
                 }} />
             </CardBody>

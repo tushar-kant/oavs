@@ -3,7 +3,6 @@ import { Table, Row, Col, Card, CardHeader, CardBody } from 'reactstrap';
 import { Pie } from 'react-chartjs-2';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Ensure Bootstrap CSS is imported
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import PaginationComponent from './PaginationComponent'; // Import the PaginationComponent
 import Header from './Header';
 import FilterDropdown from './FilterDropdown';
 import Loading from './Loading'; // Import the Loading component
@@ -14,8 +13,7 @@ const StudentTable = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Number of items per page
+
   const [selectedPhase, setSelectedPhase] = useState(null); // For phase drilldown
   const [selectedCategory, setSelectedCategory] = useState(null); // For category drilldown
 
@@ -38,17 +36,23 @@ const StudentTable = () => {
           throw new Error('Network response was not ok');
         }
         const data = await response.json();
+        console.log("Total records fetched:", data.length);
+
         setStudents(data);
         // Extract unique values for filters
         setInstituteFilters([...new Set(data.map(item => item.institute).filter(Boolean))]);
         setSessionNameFilters([...new Set(data.map(item => item.session_name).filter(Boolean))]);
         setStudentStatusFilters([...new Set(data.map(item => item.student_status).filter(Boolean))]);
-        setDistrictFilters([...new Set(data.map(item => item.distict_code).filter(Boolean))]);
+        setDistrictFilters([...new Set(data.map(item => item.distict_code).filter(Boolean)), 'N/A']); // Include 'N/A' in district filters
+
         // Set all filter values as selected initially
+        // Set all filter values as selected initially
+        const uniqueDistricts = [...new Set(data.map(item => item.distict_code).filter(Boolean))];
+        uniqueDistricts.push('N/A'); // Add 'N/A' to selectedDistrict
+        setSelectedDistrict(uniqueDistricts);
         setSelectedInstitute([...new Set(data.map(item => item.institute).filter(Boolean))]);
         setSelectedSessionName([...new Set(data.map(item => item.session_name).filter(Boolean))]);
         setSelectedStudentStatus([...new Set(data.map(item => item.student_status).filter(Boolean))]);
-        setSelectedDistrict([...new Set(data.map(item => item.distict_code).filter(Boolean))]);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -60,11 +64,13 @@ const StudentTable = () => {
 
   // Filter students based on selected filters and drilldown criteria
   const filteredStudents = students.filter(student => {
+    const studentDistrict = student.distict_code || 'N/A'; // Assign 'N/A' if district_code is null
+
     return (
       (!selectedInstitute.length || selectedInstitute.includes(student.institute)) &&
       (!selectedStudentStatus.length || selectedStudentStatus.includes(student.student_status)) &&
       (!selectedSessionName.length || selectedSessionName.includes(student.session_name)) &&
-      (!selectedDistrict.length || selectedDistrict.includes(student.distict_code)) &&
+      (selectedDistrict.length === 0 || selectedDistrict.includes(studentDistrict)) && // Include 'N/A' in selectedDistrict
       (!selectedPhase || student.phase === selectedPhase) && // Drilldown filter for phase
       (!selectedCategory || student.category_1 === selectedCategory) // Drilldown filter for category
     );
@@ -142,6 +148,10 @@ const StudentTable = () => {
       <td>{count}</td>
     </tr>
   ));
+  console.log("Total Records fetched:", students.length);
+  console.log("Filtered Students:", filteredStudents.length);
+  console.log("student", selectedStudentStatus);
+
 
   return (
     <div className="container border">
@@ -201,7 +211,7 @@ const StudentTable = () => {
                     options={{
                       responsive: true,
                       plugins: { legend: { position: 'top' } },
-                      
+
                     }}
                   />
                 </CardBody>

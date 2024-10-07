@@ -29,7 +29,20 @@ const SchoolTable = () => {
     const phaseFilterMatch = selectedPhase === '' || item.phase === selectedPhase; // Filter by selected phase
     return districtFilterMatch && phaseFilterMatch;
   })
+    // Sort the filtered data alphabetically by vidyalaya_name
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (a.vidyalaya_name < b.vidyalaya_name) return -1;
+      if (a.vidyalaya_name > b.vidyalaya_name) return 1;
+      return 0;
+    });
   
+    // Sort phase counts alphabetically by phase
+    const sortedPhaseCounts = Object.entries(
+      data.reduce((acc, { phase }) => {
+        acc[phase] = (acc[phase] || 0) + 1;
+        return acc;
+      }, {})
+    ).sort(([phaseA], [phaseB]) => (phaseA < phaseB ? -1 : 1));
 
   // Phase counts for the second table
   const phaseCounts = data.reduce((acc, { phase }) => {
@@ -51,7 +64,7 @@ const SchoolTable = () => {
           <h1 className="my-4">OAVS (School Overview)</h1>
         </div>
         <div className="col-4 text-center pt-4">
-          <h5>Total Reports: {filteredData.length}</h5>
+          <h5>Total Reports: {sortedData.length}</h5>
         </div>
       </div>
       <hr />
@@ -88,7 +101,7 @@ const SchoolTable = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredData.map((item, index) => (
+                  {sortedData.map((item, index) => (
                       <tr key={index}>
                         <td>{item.vidyalaya_name}</td>
                         <td>{item.district || 'N/A'}</td>
@@ -117,7 +130,7 @@ const SchoolTable = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(phaseCounts).map(([phase, count], index) => (
+                  {sortedPhaseCounts.map(([phase, count], index) => (
                       <tr
                         key={index}
                         style={{ cursor: 'pointer', backgroundColor: selectedPhase === phase ? '#c8e6c9' : '' }}
@@ -155,7 +168,7 @@ const SchoolTable = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((item, index) => (
+              {sortedData.map((item, index) => (
                   <tr key={index}>
                     <td>{item.vidyalaya_name}</td>
                     <td>{item.establishment_year}</td>

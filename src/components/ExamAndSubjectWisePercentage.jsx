@@ -106,7 +106,7 @@ const ExamAndSubjectWisePercentage = () => {
       {
         label: 'Pass Percentage',
         data: averagedSubjectData.map(item => item.pass_percent),
-        backgroundColor: "green", // Random color
+        backgroundColor: "orange", // Random color
       },
     ],
   };
@@ -202,10 +202,18 @@ const ExamAndSubjectWisePercentage = () => {
                     datalabels: {
                       anchor: 'end',
                       align: 'start',
-                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
                       color: 'black',
+                      formatter: (value) => {
+                        // Check if value is a number and not undefined
+                        if (typeof value === 'number') {
+                          return `${value.toFixed(2)}%`; // Show value as percentage
+                        }
+                        return ''; // Return an empty string or handle undefined values
+                      },
+
                     },
                   },
+                 
                   onClick: (event, elements) => handleSubjectClick(event, elements),
                 }}
               />
@@ -229,10 +237,18 @@ const ExamAndSubjectWisePercentage = () => {
                     datalabels: {
                       anchor: 'end',
                       align: 'start',
-                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
-                      color: 'white',
+                      color: 'black',
+                      formatter: (value) => {
+                        // Check if value is a number and not undefined
+                        if (typeof value === 'number') {
+                          return `${value.toFixed(2)}%`; // Show value as percentage
+                        }
+                        return ''; // Return an empty string or handle undefined values
+                      },
+
                     },
                   },
+                
                   onClick: (event, elements) => handleExamClick(event, elements),
                 }}
               />

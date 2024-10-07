@@ -203,14 +203,6 @@ const BoardResultOverall = () => {
                 data={chartDataStacked1}
                 options={{
                   responsive: true,
-                  plugins: {
-                    datalabels: {
-                      anchor: 'end',
-                      align: 'start',
-                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
-                      color: 'white',
-                    },
-                  },
                   onClick: (event, chartElement) => handleBarClick(chartElement) // Add click handler
                 }}
               />
@@ -228,14 +220,6 @@ const BoardResultOverall = () => {
                 data={chartDataStacked2}
                 options={{
                   responsive: true,
-                  plugins: {
-                    datalabels: {
-                      anchor: 'end',
-                      align: 'start',
-                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
-                      color: 'white',
-                    },
-                  },
                   onClick: (event, chartElement) => handleBarClick(chartElement) // Add click handler
                 }}
               />
@@ -255,14 +239,7 @@ const BoardResultOverall = () => {
                 data={chartDataGrouped}
                 options={{
                   responsive: true,
-                  plugins: {
-                    datalabels: {
-                      anchor: 'end',
-                      align: 'start',
-                      formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
-                      color: 'white',
-                    },
-                  },
+                  
                   onClick: (event, chartElement) => handleSubjectClick(chartElement) // Add click handler
                 }}
               />

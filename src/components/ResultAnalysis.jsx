@@ -195,8 +195,16 @@ const ResultAnalysis = () => {
                   datalabels: {
                     anchor: 'end',
                     align: 'start',
-                    formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
-                    color: 'white',
+                    color: 'black',
+                    formatter: (value) => {
+                      // Check if value is a number and not undefined
+                      if (typeof value === 'number') {
+                        return `${value.toFixed(2)}%`; // Show value as percentage
+                      }
+                      return ''; // Return an empty string or handle undefined values
+                    },
+                    rotation: 90, // Rotate the label to make it vertical
+
                   },
                 },
                 onClick: (event, elements) => handleSubjectClick(event, elements),
@@ -225,10 +233,19 @@ const ResultAnalysis = () => {
                   datalabels: {
                     anchor: 'end',
                     align: 'start',
-                    formatter: (value) => `${value.toFixed(2)}%`, // Format the label as percentage
-                    color: 'white',
+                    color: 'black',
+                    formatter: (value) => {
+                      // Check if value is a number and not undefined
+                      if (typeof value === 'number') {
+                        return `${value.toFixed(2)}%`; // Show value as percentage
+                      }
+                      return ''; // Return an empty string or handle undefined values
+                    },
+                    rotation: 90, // Rotate the label to make it vertical
+
                   },
                 },
+               
                 onClick: (event, elements) => handleExamClick(event, elements),
 
               }}

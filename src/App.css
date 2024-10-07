@@ -12,3 +12,9 @@ body {
     overflow-y: auto; /* Enable vertical scrolling */
   }
   
+
+
+  #test-chart1 {
+    height: 500px !important; /* Adjust to your desired height */
+  }
+  
